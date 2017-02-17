@@ -28,8 +28,9 @@ def getTime():
     return timeStamp
 
 def SelectFunction(hostIP, port):
-
+	
     bufferSize = 1024
+    running = True
     SentTotal = 0
     ReceivedTotal = 0
     sSize = 0
@@ -37,10 +38,12 @@ def SelectFunction(hostIP, port):
     counter = 0
     address = (hostIP, port)
     
+    
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serverSocket.bind(address)
     
     serverSocket.listen(socket.SOMAXCONN)
+    text_file.write("Server is now listening")
     
     #non-blocking mode
     serverSocket.setblocking(0)
@@ -51,7 +54,7 @@ def SelectFunction(hostIP, port):
     epoll.register(serverSocket.fileno(), select.EPOLLIN)
     try:
     	connections = {}
-    	while True:
+    	while running:
     	
 			#checking epoll for any events
 			events = epoll.poll(-1)
@@ -66,47 +69,58 @@ def SelectFunction(hostIP, port):
 					clientConnection.setblocking(0)
 					epoll.register(clientConnection.fileno(), select.EPOLLIN)
 					
-					text_file.write(str(clientAddress) + " connected")
-					text_file.write("Number of connected clients: " + str(counter))
+					text_file.write("\n\n" +str(clientAddress) + " connected")
+					text_file.write("\nNumber of connected clients: " + str(counter))
 					
 					print (str(clientAddress) + " connected.")
-					print ("Number of connected clients: " + str(counter))
+					print ("\nNumber of connected clients: " + str(counter))
 					
 				elif event & select.EPOLLIN:
 					rSock = connections.get(fileno)
 					data = rSock.recv(bufferSize)
 					clientAddress, clientSocket = rSock.getpeername()
 					rSize = len(data)
+					
 					ReceivedTotal += rSize
 					sSize = len(data)
 					SentTotal += sSize
 					rSock.send(data)
 					
-					text_file.write("Received Size is " +str(rSize) + " from " +clientAddress+ ":" +str(clientSocket))
-					text_file.write("Sent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
+					text_file.write("\n\nReceived Size is " + data + " from " +clientAddress+ ":" +str(clientSocket))
+					text_file.write("\nSent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
+					
+					
+					print("\n\nReceived Size is " + data + " from " +clientAddress+ ":" +str(clientSocket))
+					print("\nSent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
+					
+					rSock.close()
+
+					
+
 				elif event & select.EPOLLERR:
 					counter -= 1
 				elif event & select.EPOLLHIP:
 					counter -= 1
         			
     except KeyboardInterrupt:
-    	close(epoll,severSocket,counter, ReceivedTotal, SentTotal)
-        				
+    	Close(epoll,serverSocket,counter, ReceivedTotal, SentTotal)
+
         				
 def Close(epoll,serverSocket,counter, ReceivedData, SentData):
-    print ("Shutting down Server...")
+    
     serverSocket.close()
     text_file.write("\n\nTotal # of connections: " + str(counter))
     text_file.write("\nTotal data received: " + str(ReceivedData))
     text_file.write("\nTotal data sent: " + str(SentData))
     text_file.close()
+    print ("Shutting down Server...")
     sys.exit()
 
 
 if __name__ == '__main__':
 
-    serverIP = raw_input('Enter your server IP \n')
-    port = int(raw_input('What port would you like to use?\n'))
+    serverIP = '192.168.0.5'#raw_input('Enter your server IP \n')
+    port = 2017#int(raw_input('What port would you like to use?\n'))
 
 
     # Create and initialize the text file with the date in the filename in the logfiles directory

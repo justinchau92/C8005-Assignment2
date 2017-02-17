@@ -29,7 +29,9 @@ def getTime():
 
 def edgeFunction(hostIP, port):
 
+	
     bufferSize = 1024
+    running = True
     SentTotal = 0
     ReceivedTotal = 0
     sSize = 0
@@ -46,36 +48,43 @@ def edgeFunction(hostIP, port):
     #create epoll
     epoll = select.epoll()
     
+    address = (hostIP, port)
+    
     connections.update({serverSocket.fileno(): serverSocket})
-    serverSocket = setsockopt(socket.SQL_SOCKET, socket.SO_REUSEADDR,1)
-    serverSocket.bind(hostIP,port)
-    serverSocket.listen(socket.SOMAXCONN)
+    serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
+    serverSocket.bind(address)
+    
+    print ("Server is listening for connections\n")
+    serverSocket.listen(10000)
+    
+    
     #read when socket accepts connection
     epoll.register(serverSocket.fileno(), select.EPOLLIN | select.EPOLLET)
     
     try:
     	
-    	while True:
-    	
+    	while running:
+			
 			#checking epoll for any events
 			events = epoll.poll(-1)
 			
 			for fileno, event in events:
 				if fileno == serverSocket.fileno():
-					while true:
+					while running:
 						try:
-							clientConnection, cilentAddress = serverSocket.accept()
+							clientConnection, clientAddress = serverSocket.accept()
 							counter += 1
 							
-							connections.update({cilentConnection.fileno(): clientConnection})
+							connections.update({clientConnection.fileno(): clientConnection})
 							#set new socket to non blocking
 							clientConnection.setblocking(0)
 							epoll.register(clientConnection.fileno(), select.EPOLLIN)
 							
-							text_file.write(str(clientAddres) + " connected")
-							text_file.write("Number of connected clients: " + str(counter))
+							text_file.write("\n\n" +str(clientAddress) + " connected")
+							text_file.write("\nNumber of connected clients: " + str(counter))
+					
 							print (str(clientAddress) + " connected.")
-							print ("Number of connected clients: " + str(counter))
+							print ("\nNumber of connected clients: " + str(counter))
 						except:
 							break
 				elif event & select.EPOLLIN:
@@ -89,13 +98,18 @@ def edgeFunction(hostIP, port):
 						SentTotal += sSize
 						rSock.send(data)
 						
-						text_file.write("Received Size is " +str(rSize) + " from " +clientAddress+ ":" +str(clientSocket))
+						text_file.write("\n\nReceived Size is " + data + " from " +clientAddress+ ":" +str(clientSocket))
 						text_file.write("Sent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
+					
+					
+						print("\n\nReceived Size is " + data + " from " +clientAddress+ ":" +str(clientSocket))
+						print("\nSent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
+						rSock.close()
 					except:
 						pass
         			
     except KeyboardInterrupt:
-    	close(epoll,severSocket,counter, ReceivedTotal, SentTotal)
+    	Close(epoll,serverSocket,counter, ReceivedTotal, SentTotal)
         				
         				
 def Close(epoll,serverSocket,counter, ReceivedData, SentData):
@@ -110,8 +124,8 @@ def Close(epoll,serverSocket,counter, ReceivedData, SentData):
 
 if __name__ == '__main__':
 
-    serverIP = raw_input('Enter your server IP \n')
-    port = int(raw_input('What port would you like to use?\n'))
+    serverIP = '192.168.0.5'#raw_input('Enter your server IP \n')
+    port = 2017#int(raw_input('What port would you like to use?\n'))
 
 
     # Create and initialize the text file with the date in the filename in the logfiles directory

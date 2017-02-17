@@ -29,6 +29,7 @@ def getTime():
 def ThreadFunction(clientsocket, clientaddr):
     global ReceivedData
     global SentData
+    
     while True:
 
         #Receive data from client
@@ -50,6 +51,7 @@ def ThreadFunction(clientsocket, clientaddr):
 
         #Log the sent data
         text_file.write(str(getTime()) + "__ Size of data sent (" + clientIP + ":" + str(clientSocket) + ") = " + str(SentDataSize) + '\n')
+        clientsocket.close()
 
 
 def Close(counter, ReceivedData, SentData):
