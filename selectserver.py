@@ -58,10 +58,10 @@ def SelectFunction(hostIP, port):
 			
 			for fileno, event in events:
 				if fileno == serverSocket.fileno():
-					clientConnection, cilentAddress = serverSocket.accept()
+					clientConnection, clientAddress = serverSocket.accept()
 					counter += 1
 					
-					connections.update({cilentConnection.fileno(): clientConnection})
+					connections.update({clientConnection.fileno(): clientConnection})
 					#set new socket to non blocking
 					clientConnection.setblocking(0)
 					epoll.register(clientConnection.fileno(), select.EPOLLIN)
