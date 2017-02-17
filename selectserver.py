@@ -86,14 +86,12 @@ def SelectFunction(hostIP, port):
 					SentTotal += sSize
 					rSock.send(data)
 					
-					text_file.write("\n\nReceived Size is " + data + " from " +clientAddress+ ":" +str(clientSocket))
-					text_file.write("\nSent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
+					if rSize > 0:
+						text_file.write("\n\nReceived Size is " + data + " from " +clientAddress+ ":" +str(clientSocket))
+						text_file.write("\nSent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
 					
-					
-					print("\n\nReceived Size is " + data + " from " +clientAddress+ ":" +str(clientSocket))
-					print("\nSent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
-					
-					rSock.close()
+						print("\n\nReceived Size is " + data + " from " +clientAddress+ ":" +str(clientSocket))
+						print("\nSent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
 
 					
 
