@@ -21,15 +21,12 @@ import time
 import datetime
 import sys
 
-def getTime():
-    ts = time.time()
-    timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H:%M:%S')
-    return timeStamp
 
 def ThreadFunction(clientsocket, clientaddr):
     global ReceivedData
     global SentData
-    
+    global requests
+
     while True:
 
         #Receive data from client
@@ -42,7 +39,8 @@ def ThreadFunction(clientsocket, clientaddr):
         ReceivedData += ReceiveDataSize
 
         #LOg the received data
-        text_file.write(str(getTime()) + "__ Size of data received (" + clientIP + ":" + str(clientSocket) + ") = " + str(ReceiveDataSize) + '\n')
+        text_file.write("\nReceived Data is " + str(ReceiveDataSize) + " from " + clientIP + ":" + str(clientSocket) + '\n')
+        requests += 1
 
         #Send data
         clientsocket.send(data)
@@ -50,33 +48,40 @@ def ThreadFunction(clientsocket, clientaddr):
         SentData += SentDataSize
 
         #Log the sent data
-        text_file.write(str(getTime()) + "__ Size of data sent (" + clientIP + ":" + str(clientSocket) + ") = " + str(SentDataSize) + '\n')
-        clientsocket.close()
+        text_file.write("\nSent Data is " + str(SentDataSize) + " from " + clientIP + ":" + str(clientSocket) + '\n')
+        
+        if data == 'quit':
+			clientsocket.close()
 
 
-def Close(counter, ReceivedData, SentData):
-    print ("Shutting down Server...")
+def Close(counter, ReceivedData, SentData, requests):
     serversocket.close()
     text_file.write("\n\nTotal # of connections: " + str(counter))
     text_file.write("\nTotal data received: " + str(ReceivedData))
     text_file.write("\nTotal data sent: " + str(SentData))
+    text_file.write("\nTotal # of requests: " + str(requests))
     text_file.close()
+    print ("Shutting down Server...")
     sys.exit()
 
 
 if __name__ == '__main__':
 
-    serverIP = raw_input('Enter your server IP \n')
-    port = int(raw_input('What port would you like to use?\n'))
+    serverIP = '192.168.0.5' #raw_input('Enter your server IP \n')
+    port = 2017 #int(raw_input('Enter the port you want to use \n'))
 
     # Maintain how many connections
     connections = []
     counter = 0
+    requests = 0
 
     # Maintain amount of data sent to and from server
     ReceivedData = 0
     SentData = 0
     bufferSize = 1024
+
+    ts = time.time()
+    timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H:%M')
 
     # Create and initialize the text file with the date in the filename in the logfiles directory
     text_file = open("MultiThreadedServerLog.txt", "w")
@@ -88,7 +93,7 @@ if __name__ == '__main__':
 
     # The listen backlog queue size
     serversocket.listen(50)
-    print ("Server is listening for connections\n")
+    print ("Server is listening...\n")
 
     try:
         while 1:
@@ -97,11 +102,13 @@ if __name__ == '__main__':
             counter += 1
 
             # Log client information
-            print (str(clientaddr) + " : " + " Just Connected. \n Currently connected clients: " + str(counter) + "\n")
-            text_file.write(str(getTime()) + " - " + str(clientaddr) + " : " + " Just Connected. \n Currently connected clients: " + str(counter) + "\n")
+            text_file.write("\n\n" +str(clientaddr) + " connected")
+            text_file.write("\nNumber of connected clients: " + str(counter) + "\n")
+            print("\n\n" +str(clientaddr) + " connected")
+            print("\nNumber of connected clients: " + str(counter))
             clientThread = threading.Thread(target=ThreadFunction, args=(clientsocket, clientaddr))
+            clientThread.daemon = True
             clientThread.start()
 
     except KeyboardInterrupt:
-        print ("Keyboard interrupt occurred.")
-        Close(counter, ReceivedData, SentData)
+    	Close(counter, ReceivedData, SentData, requests)

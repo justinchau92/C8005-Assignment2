@@ -51,18 +51,20 @@ def run(clientNumber):
 
             # Start timer and send data
             start = time.time()
-            s.send(cData.encode('utf-8'))
-            print "Sent: " + cData
-
+            if _ == msgMultiple -1:
+                print("SENT QUIT____")
+                s.send('quit')
+            else:
+                s.send(cData.encode('utf-8'))
+                print "Sent: " + cData
             # Stop timer when data is received
-            sData = s.recv(buffer)
+            sData = s.recv(buffer) + "  From: Client " + str(clientNumber)
             end = time.time()
-
-            # Keep track of RTT and update total time
+                # Keep track of RTT and update total time
             response_time = end - start
             threadRTT += end - start
             totalTime += response_time
-            print "Received: " + cData + '\n'
+            print "Received: " + sData + '\n'
             t = random.randint(0, 9)
             time.sleep(t)
 
@@ -75,11 +77,11 @@ def run(clientNumber):
 
 
 if __name__ == '__main__':
-    serverIP = raw_input('Enter the server IP: ')
-    port = int(input('Enter the port: '))
-    clients = int(input('Enter number of clients: '))
-    message = raw_input('Enter a message to send: ')
-    msgMultiple = int(input('Enter the number of times you would like to send the message: '))
+    serverIP = '192.168.0.5' #raw_input('Enter the server IP: ')
+    port = 2017 #int(input('Enter the port: '))
+    clients = 5 #int(input('Enter number of clients: '))
+    message = 'Hello '#raw_input('Enter a message to send: ')
+    msgMultiple = 2 #int(input('Enter the number of times you would like to send the message: '))
 
     # Initialize Log file
     text_file = open("ClientLog.txt", "w")
@@ -98,6 +100,7 @@ if __name__ == '__main__':
         thread.join()
     # Calculations for log data
     bytes = sys.getsizeof(message)
+    bytes2 = sys.getsizeof('quit') * clients
     totalRequests = clients * msgMultiple
     totalBytes = totalRequests * bytes
     averageRTT = totalTime / totalRequests
