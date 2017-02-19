@@ -152,7 +152,8 @@ def fetch(entries):
 	message = entries[3][1].get()
 	msgMultiple = int(entries[4][1].get())
 	
-	
+	text_file = open("ClientLog.txt", "w")
+    
 	threadclients(clients,serverIP,port,msgMultiple,message)
 	
 	bytes2 = len('quit') * clients
@@ -163,6 +164,7 @@ def fetch(entries):
 	print("\nTotal RTT : "  + str(totalTime))
 	print("Total Data sent : " + str(newTotal + bytes2) + " Bytes.")
 	print("Total Number of Requests : " + str(totalRequests))
+	print("\nRequest per client : " + str(msgMultiple + 1))
 	print("\nAverage Bytes in the messages : " + str((newTotal + bytes2)/totalRequests))
 	print("Average RTT was : " + str(averageRTT) + " seconds.")
 	
@@ -171,8 +173,11 @@ def fetch(entries):
 	text_file.write("\nTotal RTT : "  + str(totalTime))
 	text_file.write("\nTotal Data sent : " + str(newTotal + bytes2) + " Bytes.")
 	text_file.write("\nTotal Number of Requests : " + str(totalRequests))
+	text_file.write("\nRequest per client : " + str(msgMultiple + 1))
 	text_file.write("\nAverage Bytes in the messages : " + str((newTotal + bytes2)/totalRequests))
 	text_file.write("\nAverage RTT : " + str(averageRTT) + " seconds.")
+	
+	text_file.close()
 	
 	T.config(state=NORMAL)
 	
@@ -180,6 +185,7 @@ def fetch(entries):
 	T.insert(END, "\nTotal RTT : "  + str(totalTime))
 	T.insert(END, "\nTotal Data sent  : " + str(newTotal + bytes2) + " Bytes.")
 	T.insert(END, "\nTotal Number of Requests : " + str(totalRequests))
+	T.insert(END, "\nRequest per client : " + str(msgMultiple + 1))
 	T.insert(END, "\nAverage Bytes in the messages : " + str((newTotal + bytes2)/totalRequests))
 	T.insert(END, "\nAverage RTT was : " + str(averageRTT) + " seconds.\n")
 	T.config(state=DISABLED)
@@ -195,8 +201,7 @@ if __name__ == '__main__':
     
     totalTime = 0
 
-    # Initialize Log file
-    text_file = open("ClientLog.txt", "w")
+    
     
     #create GUI
     root = Tk()
