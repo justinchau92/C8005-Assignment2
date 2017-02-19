@@ -15,13 +15,18 @@
 #
 # ----------------------------------------------------------------------------*/
 
+from Tkinter import *
 import socket
 import select
 import thread
 import time
 import datetime
 import sys
+import signal
 
+#list of inputs you need
+fields = 'Server IP' , 'Port'
+global root
 
 #---------------------------------------------------
 # getTime()
@@ -39,7 +44,7 @@ def getTime():
 # hostIP = IP of the server
 # port = port number you want to use for the server
 #---------------------------------------------------
-def edgeFunction(hostIP, port):
+def edgeFunction(entries):
 
 	#variables
     bufferSize = 1024
@@ -60,7 +65,7 @@ def edgeFunction(hostIP, port):
     #create epoll
     epoll = select.epoll()
     
-    address = (hostIP, port)
+    address = (entries[0][1].get(), int(entries[1][1].get()))
     
     #add socket to connections
     connections.update({serverSocket.fileno(): serverSocket})
@@ -153,17 +158,47 @@ def Close(epoll,serverSocket,counter, ReceivedData, SentData, requestCounter):
     text_file.close()
     sys.exit()
 
+#---------------------------------------------------
+# makeform - method to create input box and labels
+#
+# root - the GUI form
+# fields - list of inputs you want i.e (serverip, port)
+#-------------------------------------------------
+def makeform(root, fields):
+	entries = []
+	
+	#for each field create an input
+	for field in fields:
+		row = Frame(root)
+		lab = Label(row, width=15, text = field , anchor ='w')
+		ent = Entry(row)
+		ent.config(highlightbackground = "gray")
+		row.pack(side=TOP, fill=X, padx=5, pady=5)
+		lab.pack(side=LEFT)
+		ent.pack(side=RIGHT,expand=YES, fill=X)
+		entries.append((field,ent))
+	return entries
 
 if __name__ == '__main__':
 
-    serverIP = '192.168.0.5'#raw_input('Enter your server IP \n')
-    port = 2017#int(raw_input('What port would you like to use?\n'))
+    #serverIP = '192.168.0.16'#raw_input('Enter your server IP \n')
+    #port = 2017#int(raw_input('What port would you like to use?\n'))
 
 
     # Create and initialize the text file with the date in the filename in the logfiles directory
     filename = str(getTime()) + "_edgeserverlog.txt"
     text_file = open(filename, "w")
     
-    edgeFunction(serverIP,port)
+    root = Tk()
+    ents = makeform(root,fields)
+    
+    buttonFrame = Frame(root)
+    buttonFrame.pack(side=TOP,padx=5,pady=5)
+    
+    b1 = Button(root, text='Start Server', command=(lambda e=ents: edgeFunction(e)))
+    b1.pack(in_=buttonFrame , side=LEFT, padx=5,pady=5)
+    
+    root.title("Edge Triggered Server")
+    root.mainloop()
     
    

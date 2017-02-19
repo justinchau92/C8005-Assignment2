@@ -15,12 +15,15 @@
 #
 # ----------------------------------------------------------------------------*/
 
+from Tkinter import *
 import socket
 import select
 import thread
 import time
 import datetime
 import sys
+
+fields = 'Server IP' , 'Port'
 
 #---------------------------------------------------
 # getTime()
@@ -38,7 +41,7 @@ def getTime():
 # hostIP = IP of the server
 # port = port number you want to use for the server
 #---------------------------------------------------
-def SelectFunction(hostIP, port):
+def SelectFunction(entries):
 	
     bufferSize = 1024
     running = True
@@ -48,13 +51,14 @@ def SelectFunction(hostIP, port):
     rSize = 0
     counter = 0
     requestCounter = 0
-    address = (hostIP, port)
     
+    address = (entries[0][1].get(), int(entries[1][1].get()))
     
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serverSocket.bind(address)
     
     serverSocket.listen(socket.SOMAXCONN)
+    print ("Server is listening...\n")
     text_file.write("Server is now listening")
     
     #non-blocking mode
@@ -133,7 +137,6 @@ def SelectFunction(hostIP, port):
 #-----------------------------------------------------------------------------
 def Close(epoll,serverSocket,counter, ReceivedData, SentData, requestCounter):
     
-    
     epoll.unregister(serverSocket.fileno())
     epoll.close()
     serverSocket.close()
@@ -145,10 +148,31 @@ def Close(epoll,serverSocket,counter, ReceivedData, SentData, requestCounter):
     print ("Shutting down Server...")
     sys.exit()
 
+#---------------------------------------------------
+# makeform - method to create input box and labels
+#
+# root - the GUI form
+# fields - list of inputs you want i.e (serverip, port)
+#-------------------------------------------------
+def makeform(root, fields):
+	entries = []
+	
+	#for each field create an input
+	for field in fields:
+		row = Frame(root)
+		lab = Label(row, width=15, text = field , anchor ='w')
+		ent = Entry(row)
+		ent.config(highlightbackground = "gray")
+		row.pack(side=TOP, fill=X, padx=5, pady=5)
+		lab.pack(side=LEFT)
+		ent.pack(side=RIGHT,expand=YES, fill=X)
+		entries.append((field,ent))
+	return entries
+	
 
 if __name__ == '__main__':
 
-    serverIP = '192.168.0.5'#raw_input('Enter your server IP \n')
+    serverIP = '192.168.0.16'#raw_input('Enter your server IP \n')
     port = 2018#int(raw_input('What port would you like to use?\n'))
 
 
@@ -156,6 +180,17 @@ if __name__ == '__main__':
     filename = str(getTime()) + "_selectserverlog.txt"
     text_file = open(filename, "w")
     
-    SelectFunction(serverIP,port)
+    root = Tk()
+    ents = makeform(root,fields)
+    
+    buttonFrame = Frame(root)
+    buttonFrame.pack(side=TOP,padx=5,pady=5)
+    
+    b1 = Button(root, text='Start Server', command=(lambda e=ents: SelectFunction(e)))
+    b1.pack(in_=buttonFrame , side=LEFT, padx=5,pady=5)
+    
+    root.title("Select Level Triggered Server")
+    root.mainloop()
+    
     
    
