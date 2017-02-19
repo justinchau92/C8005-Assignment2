@@ -152,7 +152,7 @@ def fetch(entries):
 	message = entries[3][1].get()
 	msgMultiple = int(entries[4][1].get())
 	
-	text_file = open("ClientLog.txt", "w")
+	
     
 	threadclients(clients,serverIP,port,msgMultiple,message)
 	
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     #msgMultiple = 2 #int(input('Enter the number of times you would like to send the message: '))
     
     totalTime = 0
-
+    text_file = open("ClientLog.txt", "w")
     
     
     #create GUI
