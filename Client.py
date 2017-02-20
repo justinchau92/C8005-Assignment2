@@ -200,7 +200,7 @@ if __name__ == '__main__':
     #msgMultiple = 2 #int(input('Enter the number of times you would like to send the message: '))
     
     totalTime = 0
-    text_file = open("ClientLog.txt", "w")
+    text_file = open(str(getTime()) + "_ClientLog.txt", "w")
     
     
     #create GUI

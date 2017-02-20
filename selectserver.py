@@ -42,7 +42,7 @@ def getTime():
 # port = port number you want to use for the server
 #---------------------------------------------------
 def SelectFunction(entries):
-	
+
     bufferSize = 1024
     running = True
     SentTotal = 0
@@ -51,79 +51,75 @@ def SelectFunction(entries):
     rSize = 0
     counter = 0
     requestCounter = 0
-    
+    concurrentConnections = 0
+
     address = (entries[0][1].get(), int(entries[1][1].get()))
-    
+
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serverSocket.bind(address)
-    
+
     serverSocket.listen(socket.SOMAXCONN)
     print ("Server is listening...\n")
     text_file.write("Server is now listening")
-    
+
     #non-blocking mode
     serverSocket.setblocking(0)
+    servers = [serverSocket,sys.stdin]
     #create epoll
-    epoll = select.epoll()
-    
+    #epoll = select.epoll()
+
     #read when socket accepts connection
-    epoll.register(serverSocket.fileno(), select.EPOLLIN)
+    #epoll.register(serverSocket.fileno(), select.EPOLLIN)
     try:
     	connections = {}
     	while running:
-    	
-			#checking epoll for any events
-			events = epoll.poll(-1)
-			
-			for fileno, event in events:
-				if fileno == serverSocket.fileno():
+
+			reads,writes,errs = select.select(servers,[],[])
+			for x in reads:
+				if x == serverSocket:
 					clientConnection, clientAddress = serverSocket.accept()
 					counter += 1
 					
-					connections.update({clientConnection.fileno(): clientConnection})
-					#set new socket to non blocking
-					clientConnection.setblocking(0)
-					epoll.register(clientConnection.fileno(), select.EPOLLIN)
-					
+					if counter > concurrentConnections:
+						concurrentConnections = counter
+                    
+					servers.append(clientConnection)
 					text_file.write("\n\n" +str(clientAddress) + " connected")
 					text_file.write("\nNumber of connected clients: " + str(counter))
-					
+
 					print (str(clientAddress) + " connected.")
 					print ("\nNumber of connected clients: " + str(counter))
-					
-				elif event & select.EPOLLIN:
-					rSock = connections.get(fileno)
-					data = rSock.recv(bufferSize)
-					clientAddress, clientSocket = rSock.getpeername()
-					
-					#total size of bytes counting
+
+
+				else:
+					data = x.recv(bufferSize)
+					clientAddress, clientSocket = x.getpeername()
+
 					rSize = len(data)
 					ReceivedTotal += rSize
+
+					text_file.write("\n\nReceived Size is " + str(rSize) + " from " +clientAddress+ ":" +str(clientSocket))
+					print("\n\nReceived Size is " + str(rSize) + " from " +clientAddress+ ":" +str(clientSocket))
+					requestCounter += 1
+
+
+
+					x.send(data)
 					sSize = len(data)
 					SentTotal += sSize
-					rSock.send(data)
-					
-					
-					requestCounter += 1
-					text_file.write("\n\nReceived Size is " + str(rSize) + " from " +clientAddress+ ":" +str(clientSocket))
 					text_file.write("\n\nSent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
-				
-					print("\n\nReceived Size is " + str(rSize) + " from " +clientAddress+ ":" +str(clientSocket))
 					print("\n\nSent Data Size " +str(sSize) + " back to " + clientAddress+ ":" + str(clientSocket))
-					
-					#if client sends quit data close the socket
+
+
 					if data == 'quit':
-						rSock.close()
-					
-				elif event & select.EPOLLERR:
-					counter -= 1
-				elif event & select.EPOLLHIP:
-					counter -= 1
-        			
+						print "Client " + clientAddress + ":" + str(clientSocket) + " has disconnected"
+						text_file.write("\nClient " + clientAddress + ":" + str(clientSocket)+ " has disconnected")
+						x.close()
+						servers.remove(x)
+						counter -= 1
+
     except KeyboardInterrupt:
-    	Close(epoll,serverSocket,counter, ReceivedTotal, SentTotal,requestCounter)
-
-
+		Close(servers,concurrentConnections,ReceivedTotal,SentTotal,requestCounter)
 #----------------------------------------------------------------------------
 # Close Function
 # Function to turn off the server
@@ -135,18 +131,19 @@ def SelectFunction(entries):
 # SentData = Amount of data sent back to the clients
 # Request Counter = number of request the server got from the client
 #-----------------------------------------------------------------------------
-def Close(epoll,serverSocket,counter, ReceivedData, SentData, requestCounter):
-    
-    epoll.unregister(serverSocket.fileno())
-    epoll.close()
-    serverSocket.close()
-    text_file.write("\n\nTotal # of connections: " + str(counter))
+def Close(servers,counter,ReceivedData, SentData, requestCounter):
+
+    for s in servers:
+		s.close()
+
+    text_file.write("\n\nMax # of concurent connections: " + str(counter))
     text_file.write("\nTotal # of requests: " + str(requestCounter))
     text_file.write("\nTotal data received: " + str(ReceivedData))
     text_file.write("\nTotal data sent: " + str(SentData))
     text_file.close()
     print ("Shutting down Server...")
     sys.exit()
+
 
 #---------------------------------------------------
 # makeform - method to create input box and labels
@@ -156,7 +153,7 @@ def Close(epoll,serverSocket,counter, ReceivedData, SentData, requestCounter):
 #-------------------------------------------------
 def makeform(root, fields):
 	entries = []
-	
+
 	#for each field create an input
 	for field in fields:
 		row = Frame(root)
@@ -168,7 +165,7 @@ def makeform(root, fields):
 		ent.pack(side=RIGHT,expand=YES, fill=X)
 		entries.append((field,ent))
 	return entries
-	
+
 
 if __name__ == '__main__':
 
@@ -179,18 +176,15 @@ if __name__ == '__main__':
     # Create and initialize the text file with the date in the filename in the logfiles directory
     filename = str(getTime()) + "_selectserverlog.txt"
     text_file = open(filename, "w")
-    
+
     root = Tk()
     ents = makeform(root,fields)
-    
+
     buttonFrame = Frame(root)
     buttonFrame.pack(side=TOP,padx=5,pady=5)
-    
+
     b1 = Button(root, text='Start Server', command=(lambda e=ents: SelectFunction(e)))
     b1.pack(in_=buttonFrame , side=LEFT, padx=5,pady=5)
-    
+
     root.title("Select Level Triggered Server")
     root.mainloop()
-    
-    
-   
